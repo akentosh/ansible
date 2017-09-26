@@ -1,0 +1,33 @@
+---
+- name: provision stack
+  hosts: web
+  remote_user: ec2-user
+
+  tasks:
+    - name: Install Docker
+      become: true
+      yum:
+          name: docker
+          state: latest
+    - name: Install docker-py
+      become: true
+      pip:
+          name: docker-py
+    - name: Restart Docker
+      become: true
+      service: name=docker state=restarted
+    - name: Add ec2-user to Docker group
+      become: true
+      user: name=ec2-user
+            groups=docker
+            append=yes
+    - name: Test Docker
+      command: docker info
+      register: dockerinfo
+    - name: Run nginx on Docker
+      docker_container:
+        name: nginx
+        image: nginx
+        state: started
+        ports:
+          - "8080:80"
